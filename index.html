@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Inside the Human Brain — 3D Interactive Educational Experience</title>
+  <meta name="description" content="Explore the internal anatomical structures of the human brain with this interactive scroll-based 3D educational journey.">
+  
+  <!-- Modern Clean Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Project Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- A-Frame 3D WebXR Framework (Runs directly in browser without VR equipment) -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- Register Anatomical Component & Data before <a-scene> parses -->
+  <script src="js/brain-anatomy.js"></script>
+  <script src="js/brain-model.js"></script>
+</head>
+<body>
+
+  <!-- Loading Screen Overlay -->
+  <div id="loading-screen">
+    <div class="loader-spinner"></div>
+    <div class="loader-title">Inside the Human Brain</div>
+    <div class="loader-sub">Generating 3D Neural Architecture...</div>
+  </div>
+
+  <!-- Cybernetic Grid & Vignette Background Overlay -->
+  <div class="cyber-vignette"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="top-header">
+    <div class="brand-badge">
+      <div class="brand-logo-glow"></div>
+      <div class="brand-title">Inside the Human Brain</div>
+    </div>
+    <div class="header-controls">
+      <!-- Ambient Audio Synthesizer Toggle -->
+      <button id="audio-toggle-btn" class="icon-btn" title="Toggle Neural Sound Synth (Press M)">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        <span>Sound</span>
+      </button>
+
+      <!-- Structure Catalog Drawer Button -->
+      <button id="structure-list-btn" class="icon-btn" title="Open Anatomical Catalog">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+        <span>Catalog</span>
+      </button>
+
+      <!-- Custom 3D Model Settings Button -->
+      <button id="model-settings-btn" class="icon-btn" title="Load Custom 3D Brain GLB/GLTF">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <span>Model</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Fixed 3D A-Frame Scene Canvas -->
+  <div id="canvas-container">
+    <a-scene embedded vr-mode-ui="enabled: false" renderer="antialias: true; colorManagement: true; exposure: 1.15; alpha: true;">
+      <!-- Scene Lighting -->
+      <a-light type="ambient" color="#4cc9f0" intensity="0.55"></a-light>
+      <a-light type="directional" position="5 8 6" color="#ffffff" intensity="1.2" cast-shadow="false"></a-light>
+      <a-light type="directional" position="-6 -4 -5" color="#8338ec" intensity="0.9"></a-light>
+      <a-light type="point" position="0 0.5 0" color="#00f5d4" intensity="0.6" distance="8"></a-light>
+
+      <!-- Interactive 3D Camera Rig -->
+      <a-entity id="main-camera" camera="fov: 50; near: 0.1; far: 1000" position="0 1.2 6.0"></a-entity>
+
+      <!-- Anatomical Brain Model Entity -->
+      <a-entity id="brain-model" brain-visualizer position="0 0 0"></a-entity>
+    </a-scene>
+  </div>
+
+  <!-- Dynamic Section HUD Card (Floating Hologram UI) -->
+  <div id="hud-container">
+    <div id="hud-panel" class="hud-panel active-in">
+      <div class="hud-meta-bar">
+        <span id="section-tag" class="section-tag">OVERVIEW</span>
+        <span id="section-num" class="section-num">01 / 10</span>
+      </div>
+      <h1 id="section-title" class="hud-title">Inside the Human Brain</h1>
+      <h2 id="section-subtitle" class="hud-subtitle">Scroll to explore how the brain works.</h2>
+      <p id="section-desc" class="hud-desc">
+        The human brain is the command center of the nervous system, housing approximately 86 billion neurons and 100 trillion synaptic connections.
+      </p>
+      <ul id="section-bullets" class="hud-bullets"></ul>
+
+      <div class="hud-actions">
+        <!-- Section 10 "Explore Again" Button -->
+        <button id="explore-again-btn" class="btn-primary btn-explore-again">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+          <span>Explore Again</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating 3D-Projected Label Pin (Projects from 3D model coordinates) -->
+  <div id="floating-pin">
+    <div class="floating-pin-target"></div>
+    <div id="floating-pin-text" class="floating-pin-badge">ANATOMICAL TARGET</div>
+  </div>
+
+  <!-- Right Vertical Progress Indicator -->
+  <aside id="progress-nav-container">
+    <div class="progress-track-line">
+      <div id="progress-bar-fill"></div>
+    </div>
+    <div id="progress-steps" class="progress-steps-list">
+      <!-- Populated dynamically by HUDController -->
+    </div>
+  </aside>
+
+  <!-- Intro Scroll Down Mouse Indicator -->
+  <div id="scroll-hint">
+    <div class="scroll-hint-mouse">
+      <div class="scroll-hint-wheel"></div>
+    </div>
+    <span>Scroll Down</span>
+  </div>
+
+  <!-- Page Scroll Track (Creates 10 Scroll Checkpoints) -->
+  <main id="scroll-track">
+    <section class="scroll-section-spacer" data-index="0" id="sec-intro"></section>
+    <section class="scroll-section-spacer" data-index="1" id="sec-cerebrum"></section>
+    <section class="scroll-section-spacer" data-index="2" id="sec-corpus-callosum"></section>
+    <section class="scroll-section-spacer" data-index="3" id="sec-thalamus"></section>
+    <section class="scroll-section-spacer" data-index="4" id="sec-hypothalamus"></section>
+    <section class="scroll-section-spacer" data-index="5" id="sec-hippocampus"></section>
+    <section class="scroll-section-spacer" data-index="6" id="sec-amygdala"></section>
+    <section class="scroll-section-spacer" data-index="7" id="sec-brainstem"></section>
+    <section class="scroll-section-spacer" data-index="8" id="sec-cerebellum"></section>
+    <section class="scroll-section-spacer" data-index="9" id="sec-final-view"></section>
+  </main>
+
+  <!-- Modal Anatomy Inspector Dialog (Triggered on click/raycast) -->
+  <div id="anatomy-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <button id="modal-close-btn" class="modal-close">&times;</button>
+      <div class="modal-header-row">
+        <div id="modal-color-badge" class="modal-color-dot"></div>
+        <div>
+          <h2 id="modal-title" class="modal-title">Structure Name</h2>
+          <div id="modal-latin" class="modal-latin-sub">Latin Term</div>
+        </div>
+      </div>
+      <div id="modal-category" class="modal-category-badge">CATEGORY</div>
+      <div class="modal-section-title">Primary Physiological Role</div>
+      <p id="modal-role" class="modal-body-text" style="color: #ffffff; font-weight: 500;"></p>
+      
+      <div class="modal-section-title">Functional Description</div>
+      <p id="modal-desc" class="modal-body-text"></p>
+
+      <div class="modal-section-title">Anatomical Divisions & Pathways</div>
+      <div id="modal-key-parts" class="key-parts-container"></div>
+
+      <div class="modal-section-title">Clinical & Neuroscience Insight</div>
+      <div id="modal-trivia" class="modal-trivia-box"></div>
+    </div>
+  </div>
+
+  <!-- Structure Catalog Drawer (Side Panel) -->
+  <div id="structure-drawer">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Anatomy Directory</h3>
+      <button id="structure-drawer-close" class="modal-close" style="position: static;">&times;</button>
+    </div>
+    <div id="structure-drawer-items">
+      <!-- Populated dynamically by HUDController -->
+    </div>
+  </div>
+
+  <!-- Custom 3D Model Settings Modal -->
+  <div id="model-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <button id="model-modal-close" class="modal-close">&times;</button>
+      <div class="modal-header-row">
+        <div class="modal-color-dot" style="background: var(--neon-purple);"></div>
+        <div>
+          <h2 class="modal-title">3D Model Configuration</h2>
+          <div class="modal-latin-sub">External GLTF / GLB Support</div>
+        </div>
+      </div>
+      <p class="modal-body-text">
+        The application currently runs a high-precision procedural anatomical brain model featuring custom cortical gyri convolutions and segmented limbic structures.
+      </p>
+      <p class="modal-body-text">
+        You can also load your own custom <strong>.glb</strong> or <strong>.gltf</strong> 3D brain model file from your computer below. The camera trajectories, glowing highlights, and scroll transitions will seamlessly adapt to your model:
+      </p>
+      <div style="margin: 1.5rem 0; padding: 1.5rem; border: 2px dashed rgba(0, 245, 212, 0.4); border-radius: 12px; text-align: center;">
+        <input type="file" id="glb-file-input" accept=".glb,.gltf" style="display: none;">
+        <label for="glb-file-input" class="btn-primary" style="display: inline-flex; cursor: pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+          <span>Choose .GLB / .GLTF File</span>
+        </label>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.75rem;">Supported formats: Binary GLTF (.glb) or JSON GLTF (.gltf)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Popup -->
+  <div id="toast-notification">Notification Message</div>
+
+  <!-- Runtime Engines & UI Controller -->
+  <script src="js/scroll-engine.js"></script>
+  <script src="js/hud-controller.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
