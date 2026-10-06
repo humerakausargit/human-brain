@@ -1,13 +1,13 @@
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Html, Lightformer, Sparkles } from "@react-three/drei";
-import { useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { SECTIONS, STRUCTURE_INFO, scrollState, type StructureId } from "@/lib/brain-data";
+import { useDeviceCaps } from "@/hooks/use-mobile";
 
 /* ---------- Procedural anatomy helpers ----------
  * The cortex is generated procedurally (ridged wave noise displacing an ellipsoid)
- * so the site works with zero external files. To use a real anatomical model,
- * replace <Hemisphere> with a useGLTF("/models/brain.glb") mesh.
+ * so the site works with zero external files.
  */
 function makeRng(seed: number) {
   return () => {
@@ -31,9 +31,12 @@ function gyri(p: THREE.Vector3) {
   return 1 - Math.min(1, Math.abs(s)); // ridged: 1 on gyrus crest, 0 in sulcus
 }
 
-function useHemisphereGeometry(side: 1 | -1) {
+/* Mobile: use lower tessellation to reduce vertex count */
+function useHemisphereGeometry(side: 1 | -1, reduceQuality = false) {
   return useMemo(() => {
-    const g = new THREE.SphereGeometry(1, 160, 120);
+    const segs = reduceQuality ? 80 : 160;
+    const rings = reduceQuality ? 60 : 120;
+    const g = new THREE.SphereGeometry(1, segs, rings);
     const pos = g.attributes["position"] as THREE.BufferAttribute;
     const colors: number[] = [];
     const v = new THREE.Vector3();
@@ -59,12 +62,14 @@ function useHemisphereGeometry(side: 1 | -1) {
     g.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     g.computeVertexNormals();
     return g;
-  }, [side]);
+  }, [side, reduceQuality]);
 }
 
-function useCerebellumGeometry() {
+function useCerebellumGeometry(reduceQuality = false) {
   return useMemo(() => {
-    const g = new THREE.SphereGeometry(1, 120, 90);
+    const segs = reduceQuality ? 60 : 120;
+    const rings = reduceQuality ? 45 : 90;
+    const g = new THREE.SphereGeometry(1, segs, rings);
     const pos = g.attributes["position"] as THREE.BufferAttribute;
     const colors: number[] = [];
     const v = new THREE.Vector3();
@@ -82,12 +87,14 @@ function useCerebellumGeometry() {
     g.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     g.computeVertexNormals();
     return g;
-  }, []);
+  }, [reduceQuality]);
 }
 
-function tube(points: [number, number, number][], radius: number) {
+function tube(points: [number, number, number][], radius: number, reduceQuality = false) {
   const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)));
-  return new THREE.TubeGeometry(curve, 64, radius, 20, false);
+  const tubSegs = reduceQuality ? 32 : 64;
+  const radSegs = reduceQuality ? 10 : 20;
+  return new THREE.TubeGeometry(curve, tubSegs, radius, radSegs, false);
 }
 
 /* ---------- Highlightable structure ---------- */
@@ -126,6 +133,7 @@ function useStructureMaterial(color: string, id: StructureId, opaqueWhenCutaway 
 
 interface PickProps {
   onPick: (id: StructureId) => void;
+  reduceQuality?: boolean;
 }
 
 function pickHandler(id: StructureId, onPick: (id: StructureId) => void) {
@@ -135,9 +143,9 @@ function pickHandler(id: StructureId, onPick: (id: StructureId) => void) {
   };
 }
 
-function Cortex({ onPick }: PickProps) {
-  const left = useHemisphereGeometry(-1);
-  const right = useHemisphereGeometry(1);
+function Cortex({ onPick, reduceQuality = false }: PickProps) {
+  const left = useHemisphereGeometry(-1, reduceQuality);
+  const right = useHemisphereGeometry(1, reduceQuality);
   const mat = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
@@ -178,13 +186,14 @@ function Cortex({ onPick }: PickProps) {
   );
 }
 
-function Internal({ onPick }: PickProps) {
+function Internal({ onPick, reduceQuality = false }: PickProps) {
+  const rq = reduceQuality;
   const corpusGeo = useMemo(
-    () => tube([[0, -0.05, 0.55], [0, 0.22, 0.42], [0, 0.32, 0.05], [0, 0.28, -0.35], [0, 0.08, -0.55]], 0.07),
-    [],
+    () => tube([[0, -0.05, 0.55], [0, 0.22, 0.42], [0, 0.32, 0.05], [0, 0.28, -0.35], [0, 0.08, -0.55]], 0.07, rq),
+    [rq],
   );
-  const hippoL = useMemo(() => tube([[-0.42, -0.3, 0.12], [-0.5, -0.36, -0.12], [-0.45, -0.25, -0.42], [-0.28, -0.05, -0.5]], 0.055), []);
-  const hippoR = useMemo(() => tube([[0.42, -0.3, 0.12], [0.5, -0.36, -0.12], [0.45, -0.25, -0.42], [0.28, -0.05, -0.5]], 0.055), []);
+  const hippoL = useMemo(() => tube([[-0.42, -0.3, 0.12], [-0.5, -0.36, -0.12], [-0.45, -0.25, -0.42], [-0.28, -0.05, -0.5]], 0.055, rq), [rq]);
+  const hippoR = useMemo(() => tube([[0.42, -0.3, 0.12], [0.5, -0.36, -0.12], [0.45, -0.25, -0.42], [0.28, -0.05, -0.5]], 0.055, rq), [rq]);
   const stemGeo = useMemo(() => {
     const pts = [
       new THREE.Vector2(0.001, -1.55),
@@ -195,12 +204,13 @@ function Internal({ onPick }: PickProps) {
       new THREE.Vector2(0.16, -0.4),
       new THREE.Vector2(0.001, -0.3),
     ];
-    const g = new THREE.LatheGeometry(pts, 48);
+    const latheSegs = rq ? 24 : 48;
+    const g = new THREE.LatheGeometry(pts, latheSegs);
     g.rotateX(-0.25);
     g.translate(0, 0, -0.32);
     return g;
-  }, []);
-  const cereGeo = useCerebellumGeometry();
+  }, [rq]);
+  const cereGeo = useCerebellumGeometry(rq);
 
   const corpus = useStructureMaterial("#f1e4d6", "corpus");
   const thal = useStructureMaterial("#c99aa5", "thalamus");
@@ -211,25 +221,30 @@ function Internal({ onPick }: PickProps) {
   const cere = useStructureMaterial("#ffffff", "cerebellum");
   cere.vertexColors = true;
 
+  const sphereHi: [number, number, number] = rq ? [1, 24, 18] : [1, 40, 30];
+  const sphereMd: [number, number, number] = rq ? [1, 20, 14] : [1, 32, 24];
+  const sphereLo: [number, number, number] = rq ? [1, 16, 12] : [1, 28, 20];
+  const sphereXs: [number, number, number] = rq ? [1, 10, 8] : [1, 16, 12];
+
   return (
     <group>
       <mesh geometry={corpusGeo} material={corpus} onClick={pickHandler("corpus", onPick)} />
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * 0.13, -0.05, -0.1]} scale={[0.11, 0.13, 0.2]} material={thal} onClick={pickHandler("thalamus", onPick)}>
-          <sphereGeometry args={[1, 40, 30]} />
+          <sphereGeometry args={sphereHi} />
         </mesh>
       ))}
       <mesh position={[0, -0.3, 0.12]} scale={[0.09, 0.08, 0.11]} material={hypo} onClick={pickHandler("hypothalamus", onPick)}>
-        <sphereGeometry args={[1, 32, 24]} />
+        <sphereGeometry args={sphereMd} />
       </mesh>
       <mesh position={[0, -0.42, 0.18]} scale={[0.035, 0.08, 0.035]} material={hypo}>
-        <sphereGeometry args={[1, 16, 12]} />
+        <sphereGeometry args={sphereXs} />
       </mesh>
       <mesh geometry={hippoL} material={hippo} onClick={pickHandler("hippocampus", onPick)} />
       <mesh geometry={hippoR} material={hippo} onClick={pickHandler("hippocampus", onPick)} />
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * 0.44, -0.33, 0.24]} scale={[0.075, 0.07, 0.085]} material={amyg} onClick={pickHandler("amygdala", onPick)}>
-          <sphereGeometry args={[1, 28, 20]} />
+          <sphereGeometry args={sphereLo} />
         </mesh>
       ))}
       <mesh geometry={stemGeo} material={stem} onClick={pickHandler("brainstem", onPick)} castShadow />
@@ -283,7 +298,15 @@ function ActiveLabel() {
 /* ---------- Scroll-driven camera ---------- */
 const smooth = (t: number) => t * t * (3 - 2 * t);
 
-function CameraRig({ dragRef, brainRef }: { dragRef: React.RefObject<{ yaw: number }>; brainRef: React.RefObject<THREE.Group | null> }) {
+function CameraRig({
+  dragRef,
+  brainRef,
+  camDistMultiplier = 1,
+}: {
+  dragRef: React.RefObject<{ yaw: number }>;
+  brainRef: React.RefObject<THREE.Group | null>;
+  camDistMultiplier?: number;
+}) {
   const { camera } = useThree();
   const idleYaw = useRef(0);
   const look = useRef(new THREE.Vector3(0, 0, 0));
@@ -298,7 +321,15 @@ function CameraRig({ dragRef, brainRef }: { dragRef: React.RefObject<{ yaw: numb
     const b = SECTIONS[i + 1]!;
     goalPos.set(...a.cam).lerp(new THREE.Vector3(...b.cam), t);
     goalLook.set(...a.target).lerp(new THREE.Vector3(...b.target), t);
-    // Drag + idle drift rotate the brain itself (camera path stays stable)
+
+    /* Mobile camera: adjust distance multiplier */
+    if (camDistMultiplier !== 1) {
+      const dir = goalPos.clone().sub(goalLook).normalize();
+      const dist = goalPos.distanceTo(goalLook);
+      goalPos.copy(goalLook).addScaledVector(dir, dist * camDistMultiplier);
+    }
+
+    // Drag + idle drift rotate the brain itself
     if (brainRef.current) {
       const idleOn = s < 0.5 || s > SECTIONS.length - 1.5;
       if (idleOn) idleYaw.current += dt * 0.15;
@@ -314,46 +345,202 @@ function CameraRig({ dragRef, brainRef }: { dragRef: React.RefObject<{ yaw: numb
   return null;
 }
 
-export default function BrainScene({ onPick }: PickProps) {
+function FovAdjuster({ targetFov }: { targetFov: number }) {
+  const { camera } = useThree();
+  useFrame((_s, dt) => {
+    const cam = camera as THREE.PerspectiveCamera;
+    const k = 1 - Math.exp(-3 * dt);
+    cam.fov += (targetFov - cam.fov) * k;
+    cam.updateProjectionMatrix();
+  });
+  return null;
+}
+
+function SceneContent({
+  onPick,
+  reduceQuality,
+  dragRef,
+  brainRef,
+  camDistMultiplier,
+  targetFov,
+}: {
+  onPick: (id: StructureId) => void;
+  reduceQuality: boolean;
+  dragRef: React.RefObject<{ yaw: number }>;
+  brainRef: React.RefObject<THREE.Group | null>;
+  camDistMultiplier: number;
+  targetFov: number;
+}) {
+  return (
+    <>
+      <color attach="background" args={["#05070f"]} />
+      <fog attach="fog" args={["#05070f", 5, 14]} />
+
+      <ambientLight intensity={reduceQuality ? 0.35 : 0.25} />
+      <directionalLight
+        position={[3, 5, 4]}
+        intensity={2.2}
+        color="#fff1ea"
+        castShadow={!reduceQuality}
+        shadow-mapSize={reduceQuality ? [256, 256] : [1024, 1024]}
+      />
+      <pointLight position={[-4, 1, -3]} intensity={reduceQuality ? 10 : 18} color="#6a7cff" />
+      {!reduceQuality && (
+        <pointLight position={[3, -2, -3]} intensity={12} color="#3fd0ff" />
+      )}
+
+      <Environment resolution={reduceQuality ? 64 : 128}>
+        <Lightformer intensity={1.6} position={[0, 5, 2]} scale={[8, 8, 1]} color="#ffe8e0" />
+        {!reduceQuality && (
+          <>
+            <Lightformer intensity={1} position={[-5, 0, -2]} rotation-y={Math.PI / 2} scale={[12, 2, 1]} color="#7d8cff" />
+            <Lightformer intensity={0.8} position={[5, -1, 0]} rotation-y={-Math.PI / 2} scale={[12, 2, 1]} color="#5fd4ff" />
+          </>
+        )}
+      </Environment>
+
+      <Sparkles
+        count={reduceQuality ? 30 : 90}
+        scale={[12, 7, 12]}
+        size={reduceQuality ? 0.4 : 0.5}
+        speed={0.25}
+        opacity={0.35}
+        color="#8fb7ff"
+      />
+
+      <group ref={brainRef}>
+        <Internal onPick={onPick} reduceQuality={reduceQuality} />
+        <Cortex onPick={onPick} reduceQuality={reduceQuality} />
+        <ActiveLabel />
+      </group>
+
+      <CameraRig dragRef={dragRef} brainRef={brainRef} camDistMultiplier={camDistMultiplier} />
+      <FovAdjuster targetFov={targetFov} />
+    </>
+  );
+}
+
+export default function BrainScene({ onPick }: { onPick: (id: StructureId) => void }) {
+  const device = useDeviceCaps();
   const drag = useRef({ yaw: 0, down: false, x: 0 });
   const brainRef = useRef<THREE.Group>(null);
+
+  /* Touch gestures */
+  const touchState = useRef({
+    touches: [] as { id: number; x: number; y: number }[],
+    lastPinchDist: 0,
+    isPinching: false,
+    lastX: 0,
+  });
+
+  const [zoomMultiplier, setZoomMultiplier] = useState(1);
+
+  const camDistMultiplier = useMemo(() => {
+    let base = 1;
+    if (device.isSmallPhone) base = 1.45;
+    else if (device.isMobile) base = 1.3;
+    else if (device.isTablet) base = 1.15;
+    if ((device.isMobile || device.isTablet) && device.orientation === "portrait") {
+      base *= 1.1;
+    }
+    return base * zoomMultiplier;
+  }, [device.isMobile, device.isTablet, device.isSmallPhone, device.orientation, zoomMultiplier]);
+
+  const targetFov = useMemo(() => {
+    if (device.isSmallPhone) return 52;
+    if (device.isMobile) return 48;
+    if (device.isTablet) return 44;
+    return 42;
+  }, [device.isMobile, device.isTablet, device.isSmallPhone]);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const ts = touchState.current;
+    ts.touches = Array.from(e.touches).map((t) => ({ id: t.identifier, x: t.clientX, y: t.clientY }));
+    if (e.touches.length === 1) {
+      ts.lastX = e.touches[0]!.clientX;
+      ts.isPinching = false;
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
+      const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
+      ts.lastPinchDist = Math.hypot(dx, dy);
+      ts.isPinching = true;
+    }
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    const ts = touchState.current;
+    if (e.touches.length === 1 && !ts.isPinching) {
+      const x = e.touches[0]!.clientX;
+      const dx = x - ts.lastX;
+      drag.current.yaw += dx * 0.008;
+      ts.lastX = x;
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
+      const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
+      const dist = Math.hypot(dx, dy);
+      if (ts.lastPinchDist > 0) {
+        const scale = ts.lastPinchDist / dist;
+        setZoomMultiplier((prev) => Math.max(0.5, Math.min(2.5, prev * scale)));
+      }
+      ts.lastPinchDist = dist;
+      ts.isPinching = true;
+    }
+  }, []);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    const ts = touchState.current;
+    ts.touches = Array.from(e.touches).map((t) => ({ id: t.identifier, x: t.clientX, y: t.clientY }));
+    if (e.touches.length < 2) {
+      ts.isPinching = false;
+      ts.lastPinchDist = 0;
+    }
+    if (e.touches.length === 1) {
+      ts.lastX = e.touches[0]!.clientX;
+    }
+  }, []);
+
   return (
     <Canvas
       className="brain-canvas"
-      dpr={[1, 1.75]}
-      shadows
-      camera={{ position: [0, 0.3, 5.2], fov: 42, near: 0.05, far: 60 }}
-      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
+      dpr={device.dpr}
+      shadows={!device.reduceQuality}
+      camera={{ position: [0, 0.3, 5.2], fov: targetFov, near: 0.05, far: 60 }}
+      gl={{
+        antialias: !device.reduceQuality,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        powerPreference: device.reduceQuality ? "low-power" : "high-performance",
+      }}
       onPointerDown={(e) => {
+        if (device.isTouch) return;
         drag.current.down = true;
         drag.current.x = e.clientX;
       }}
-      onPointerUp={() => (drag.current.down = false)}
-      onPointerLeave={() => (drag.current.down = false)}
+      onPointerUp={() => {
+        if (device.isTouch) return;
+        drag.current.down = false;
+      }}
+      onPointerLeave={() => {
+        if (device.isTouch) return;
+        drag.current.down = false;
+      }}
       onPointerMove={(e) => {
+        if (device.isTouch) return;
         if (!drag.current.down) return;
         drag.current.yaw += (e.clientX - drag.current.x) * 0.006;
         drag.current.x = e.clientX;
       }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
-      <color attach="background" args={["#05070f"]} />
-      <fog attach="fog" args={["#05070f", 5, 14]} />
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[3, 5, 4]} intensity={2.2} color="#fff1ea" castShadow shadow-mapSize={[1024, 1024]} />
-      <pointLight position={[-4, 1, -3]} intensity={18} color="#6a7cff" />
-      <pointLight position={[3, -2, -3]} intensity={12} color="#3fd0ff" />
-      <Environment resolution={128}>
-        <Lightformer intensity={1.6} position={[0, 5, 2]} scale={[8, 8, 1]} color="#ffe8e0" />
-        <Lightformer intensity={1} position={[-5, 0, -2]} rotation-y={Math.PI / 2} scale={[12, 2, 1]} color="#7d8cff" />
-        <Lightformer intensity={0.8} position={[5, -1, 0]} rotation-y={-Math.PI / 2} scale={[12, 2, 1]} color="#5fd4ff" />
-      </Environment>
-      <Sparkles count={90} scale={[12, 7, 12]} size={0.5} speed={0.25} opacity={0.35} color="#8fb7ff" />
-      <group ref={brainRef}>
-        <Internal onPick={onPick} />
-        <Cortex onPick={onPick} />
-        <ActiveLabel />
-      </group>
-      <CameraRig dragRef={drag} brainRef={brainRef} />
+      <SceneContent
+        onPick={onPick}
+        reduceQuality={device.reduceQuality}
+        dragRef={drag}
+        brainRef={brainRef}
+        camDistMultiplier={camDistMultiplier}
+        targetFov={targetFov}
+      />
     </Canvas>
   );
 }

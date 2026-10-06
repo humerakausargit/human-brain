@@ -74,22 +74,42 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" },
+      { name: "theme-color", content: "#05070f" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "theme-color", content: "#05070f" },
+
+      /* Primary Meta Tags */
       { title: "Inside the Human Brain — 3D Interactive Atlas" },
-      { name: "description", content: "A cinematic, interactive 3D journey through the anatomy and neural structures of the human brain." },
-      { property: "og:title", content: "Inside the Human Brain — 3D Interactive Atlas" },
-      { property: "og:description", content: "Explore the human cerebrum, thalamus, hippocampus, cerebellum, and brainstem in interactive 3D." },
+      { name: "title", content: "Inside the Human Brain — 3D Interactive Atlas" },
+      { name: "description", content: "A cinematic, interactive 3D journey through the anatomy and neural structures of the human brain. Scroll to explore the cerebrum, thalamus, hippocampus, cerebellum, and brainstem." },
+      { name: "keywords", content: "human brain, 3D brain, neuroscience, anatomy, 3D atlas, cerebrum, hippocampus, thalamus, interactive education" },
+      { name: "author", content: "Inside the Human Brain" },
+
+      /* Open Graph Protocol / Facebook / WhatsApp / LinkedIn / Discord */
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/preview.jpg" },
+      { property: "og:url", content: "https://human-brain-rouge.vercel.app/" },
+      { property: "og:site_name", content: "Inside the Human Brain" },
+      { property: "og:title", content: "Inside the Human Brain — 3D Interactive Atlas" },
+      { property: "og:description", content: "A cinematic, interactive 3D journey through the anatomy and neural structures of the human brain. Scroll to explore the cerebrum, thalamus, hippocampus, cerebellum, and brainstem." },
+      { property: "og:image", content: "https://human-brain-rouge.vercel.app/preview.jpg" },
+      { property: "og:image:secure_url", content: "https://human-brain-rouge.vercel.app/preview.jpg" },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Inside the Human Brain 3D Interactive Atlas Preview" },
+
+      /* Twitter Card */
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Inside the Human Brain — 3D Atlas" },
-      { name: "twitter:description", content: "An interactive 3D journey through human brain anatomy." },
-      { name: "twitter:image", content: "/preview.jpg" },
+      { name: "twitter:url", content: "https://human-brain-rouge.vercel.app/" },
+      { name: "twitter:title", content: "Inside the Human Brain — 3D Interactive Atlas" },
+      { name: "twitter:description", content: "A cinematic, interactive 3D journey through the anatomy and neural structures of the human brain. Scroll to explore the cerebrum, thalamus, hippocampus, cerebellum, and brainstem." },
+      { name: "twitter:image", content: "https://human-brain-rouge.vercel.app/preview.jpg" },
+      { name: "twitter:image:alt", content: "Inside the Human Brain 3D Interactive Atlas Preview" },
     ],
     links: [
+      { rel: "canonical", href: "https://human-brain-rouge.vercel.app/" },
+      { rel: "image_src", href: "https://human-brain-rouge.vercel.app/preview.jpg" },
       {
         rel: "stylesheet",
         href: appCss,
