@@ -8,10 +8,9 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -36,11 +35,8 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
-  console.error(error);
+  console.error("Runtime error:", error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -49,7 +45,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Something went wrong while loading the 3D scene. You can try refreshing or heading back home.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -77,21 +73,32 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Inside the Human Brain" },
-      { name: "description", content: "A cinematic 3D journey through the human brain." },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "theme-color", content: "#05070f" },
+      { title: "Inside the Human Brain — 3D Interactive Atlas" },
+      { name: "description", content: "A cinematic, interactive 3D journey through the anatomy and neural structures of the human brain." },
+      { property: "og:title", content: "Inside the Human Brain — 3D Interactive Atlas" },
+      { property: "og:description", content: "Explore the human cerebrum, thalamus, hippocampus, cerebellum, and brainstem in interactive 3D." },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/preview.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Inside the Human Brain — 3D Atlas" },
+      { name: "twitter:description", content: "An interactive 3D journey through human brain anatomy." },
+      { name: "twitter:image", content: "/preview.jpg" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "alternate icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/favicon.svg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,
@@ -119,7 +126,6 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );

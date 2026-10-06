@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070b19" />
+      <stop offset="100%" stop-color="#121a36" />
+    </linearGradient>
+    <linearGradient id="brain-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5fd4ff" />
+      <stop offset="50%" stop-color="#a78bfa" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rounded icon container -->
+  <rect width="64" height="64" rx="16" fill="url(#bg)" stroke="#5fd4ff" stroke-width="1.5" stroke-opacity="0.3"/>
+
+  <!-- Left Hemisphere -->
+  <g filter="url(#glow)">
+    <path d="M30 14 C22 14 14 18 14 26 C14 31 17 34 16 38 C15 42 18 48 24 49 C27 49.5 29 48 30 46" 
+          stroke="url(#brain-glow)" stroke-width="2.5" stroke-linecap="round" fill="none" />
+    
+    <!-- Left gyri sulci details -->
+    <path d="M22 22 C26 24 24 30 19 32" stroke="#5fd4ff" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <path d="M28 26 C25 32 18 36 22 42" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <path d="M29 36 C25 38 24 43 27 46" stroke="#5fd4ff" stroke-width="1.6" stroke-linecap="round" fill="none" />
+
+    <!-- Right Hemisphere -->
+    <path d="M34 14 C42 14 50 18 50 26 C50 31 47 34 48 38 C49 42 46 48 40 49 C37 49.5 35 48 34 46" 
+          stroke="url(#brain-glow)" stroke-width="2.5" stroke-linecap="round" fill="none" />
+    
+    <!-- Right gyri sulci details -->
+    <path d="M42 22 C38 24 40 30 45 32" stroke="#5fd4ff" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <path d="M36 26 C39 32 46 36 42 42" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <path d="M35 36 C39 38 40 43 37 46" stroke="#5fd4ff" stroke-width="1.6" stroke-linecap="round" fill="none" />
+
+    <!-- Center Corpus / Brainstem indicator -->
+    <path d="M32 17 L32 44" stroke="#5fd4ff" stroke-width="1.5" stroke-dasharray="2 3" stroke-linecap="round" opacity="0.6"/>
+    <path d="M32 46 L32 53" stroke="url(#brain-glow)" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Neural glow nodes -->
+    <circle cx="22" cy="22" r="1.5" fill="#5fd4ff" />
+    <circle cx="42" cy="22" r="1.5" fill="#5fd4ff" />
+    <circle cx="32" cy="30" r="1.8" fill="#ec4899" />
+    <circle cx="24" cy="42" r="1.5" fill="#a78bfa" />
+    <circle cx="40" cy="42" r="1.5" fill="#a78bfa" />
+  </g>
+</svg>
