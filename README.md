@@ -2,11 +2,15 @@
 
 A cinematic, scroll-driven 3D educational web atlas through the anatomical structures of the human brain, fully optimized for modern desktop, mobile phones, and tablets.
 
+🌐 **Live Demo / Preview**: [https://human-brain-rouge.vercel.app/](https://human-brain-rouge.vercel.app/)
+
 ---
 
 ## 🧠 Website Preview
 
-![Inside the Human Brain 3D Website Preview](public/preview.jpg)
+[![Inside the Human Brain 3D Website Preview](public/preview.jpg)](https://human-brain-rouge.vercel.app/)
+
+> 👉 **Experience it live**: [https://human-brain-rouge.vercel.app/](https://human-brain-rouge.vercel.app/)
 
 ---
 
